@@ -37,6 +37,11 @@
   [request]
   (compute/primary-ip (:target-node request)))
 
+(defn target-private-ip
+  "Private IP of the target-node"
+  [request]
+  (compute/private-ip (:target-node request)))
+
 (defn os-family
   "OS-Family of the target-node."
   [request]
