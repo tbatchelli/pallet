@@ -109,13 +109,22 @@
                                  (pallet.utils/make-user "root" :password "superduper"))))
 
 
+(defn image-from-template
+  [images template]
+  (->
+   (filter
+    (fn image-matches? [[image-name image-properties]]
+      (every? #(= (image-properties (first %)) (second %)) template))
+    images)
+   ffirst))
+
 (deftype VmfestService
     [server images locations]
   pallet.compute/ComputeService
   (nodes
    [compute-service]
    (manager/machines server))
-  
+
   (ensure-os-family
    [compute-service request]
    request)
@@ -126,7 +135,10 @@
   (run-nodes
    [compute-service node-type node-count request init-script]
    (try
-     (let [image-id (-> node-type :image :image-id)
+     (let [image-id (or (image-from-template images (-> node-type :image))
+                        (throw (RuntimeException.
+                                (format "No matching image for %s"
+                                        (pr-str (-> node-type :image))))))
            tag-name (name (:tag node-type))
            current-machines-in-tag (filter
                                     #(= tag-name
